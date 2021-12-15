@@ -58,7 +58,7 @@ def create_local_music_service(local_music_location, **_ignore):
 
 
 if __name__ == "__main__":
-    from factory import program as p
+    import program as p
 
     spot = SpotfyServiceBuilder()
     print(
