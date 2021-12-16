@@ -1,4 +1,7 @@
-class SpotfyService:
+import object_factory
+
+
+class SpotifyService:
     def __init__(self, access_code):
         self._access_code = access_code
 
@@ -6,14 +9,14 @@ class SpotfyService:
         print(f"Accessing Spotfy with {self._access_code}")
 
 
-class SpotfyServiceBuilder:
+class SpotifyServiceBuilder:
     def __init__(self):
         self._instance = None
 
     def __call__(self, spotify_client_key, spotify_client_secret, **_ignored):
         if not self._instance:
             access_code = self.authorize(spotify_client_key, spotify_client_secret)
-            self._instance = SpotfyService(access_code)
+            self._instance = SpotifyService(access_code)
         return self._instance
 
     def authorize(self, key, secret):
@@ -53,26 +56,21 @@ class LocalService:
         print(f"Accessing Local music at {self._location}")
 
 
+class MusicServiceProvider(object_factory.ObjectFactory):
+    def get(self, service_id, **kwargs):
+        return self.create(service_id, **kwargs)
+
+
 def create_local_music_service(local_music_location, **_ignore):
     return LocalService(local_music_location)
 
 
-if __name__ == "__main__":
-    import program as p
+factory = object_factory.ObjectFactory()
+factory.register_builder("SPOTIFY", SpotifyServiceBuilder())
+factory.register_builder("PANDORA", PandoraServiceBuilder())
+factory.register_builder("LOCAL", create_local_music_service)
 
-    spot = SpotfyServiceBuilder()
-    print(
-        spot(p.config.get("spotifiy_client_key"), p.config.get("spotfy_client_secret"))
-    )
-
-    local = LocalService(p.config.get("local_music_location"))
-    local.test_connection()
-
-    pandora = PandoraServiceBuilder()
-    print(
-        pandora(
-            p.config.get("pandora_client_key"), p.config.get("pandora_client_secret")
-        )
-    )
-
-    create_local_music_service(p.config.get("local_music_location"))
+services = MusicServiceProvider()
+services.register_builder("SPOTIFY", SpotifyServiceBuilder())
+services.register_builder("PANDORA", PandoraServiceBuilder())
+services.register_builder("LOCAL", create_local_music_service)
